@@ -8,18 +8,18 @@ const state = {
   mode: 'add',               // 'add' | 'remove'
   theme: 'light',
   employees: [],
-  customDepartments: [],     // отделы, созданные в приложении (config.json)
-  selectedId: null,          // сотрудник, выбранный из подсказок при отбитии
+  customDepartments: [],     // задания, созданные в приложении (config.json)
+  selectedId: null,          // физлицо, выбранное из подсказок при отбитии
   dragId: null,
-  boardsCollapsed: true,     // отделы по умолчанию скрыты (видны только заголовки)
+  boardsCollapsed: true,     // задания по умолчанию скрыты (видны только заголовки)
   connected: false,
   historyAction: 'add',      // 'add' | 'remove'
-  departmentCapacity: 16,    // максимум сотрудников в отделе (приходит из get_settings)
+  departmentCapacity: 16,    // максимум физлиц в задании (приходит из get_settings)
 };
 
 const TABS = ['add', 'list', 'boards', 'history'];
 const NO_DEPT = '';
-const NO_DEPT_TITLE = 'Без отдела';
+const NO_DEPT_TITLE = 'Без задания';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -105,7 +105,7 @@ function api(method, ...args) {
   });
 }
 
-/** Все отделы: созданные в приложении + встречающиеся в БД. */
+/** Все задания: созданные в приложении + встречающиеся в БД. */
 function allDepartments() {
   const names = [...state.customDepartments];
   const known = new Set(names.map(normalize));
@@ -177,7 +177,7 @@ function switchTab(tab) {
 async function loadEmployees({ animate = false } = {}) {
   try {
     state.employees = await api('get_employees');
-    // отделы общие для всех пользователей и хранятся в БД — подтягиваем свежий список
+    // задания общие для всех пользователей и хранятся в БД — подтягиваем свежий список
     state.customDepartments = (await api('get_settings')).departments || [];
     setConnected(true);
   } catch (error) {
@@ -219,7 +219,7 @@ function setMode(mode) {
   $$('input[name="mode"]').forEach((input) => { input.checked = input.value === mode; });
   const isAdd = mode === 'add';
   const title = $('#formTitle');
-  title.textContent = isAdd ? 'Добавление сотрудника' : 'Отбитие сотрудника';
+  title.textContent = isAdd ? 'Добавление физлица' : 'Отбитие физлица';
   title.style.animation = 'none';
   void title.offsetWidth; // перезапуск анимации заголовка
   title.style.animation = '';
@@ -262,18 +262,18 @@ function renderSuggestions() {
 async function submitForm(event) {
   event.preventDefault();
   const fio = form.fio.value.trim().replace(/\s+/g, ' ');
-  if (!fio) { showFormError('Укажите ФИО сотрудника'); form.fio.focus(); return; }
+  if (!fio) { showFormError('Укажите ФИО физлица'); form.fio.focus(); return; }
 
   if (state.mode === 'add') {
     const role = form.role.value.trim();
-    if (!role) { showFormError('Опишите должность сотрудника'); form.role.focus(); return; }
+    if (!role) { showFormError('Опишите должность физлица'); form.role.focus(); return; }
     await withBusy(form.submit, async () => {
       const employee = await api('add_employee', fio, role, $('#addDept').value);
       state.employees.push(employee);
       form.fio.value = '';
       form.role.value = '';
       renderAll();
-      toast('Сотрудник добавлен');
+      toast('Физлицо добавлено');
     });
     return;
   }
@@ -283,9 +283,9 @@ async function submitForm(event) {
     ? [selected]
     : state.employees.filter((e) => normalize(e.who) === normalize(fio));
 
-  if (candidates.length === 0) { showFormError('Сотрудник с таким ФИО не найден'); return; }
+  if (candidates.length === 0) { showFormError('Физлицо с таким ФИО не найдено'); return; }
   if (candidates.length > 1) {
-    showFormError('Найдено несколько сотрудников с таким ФИО — выберите нужного в подсказках');
+    showFormError('Найдено несколько физлиц с таким ФИО — выберите нужное в подсказках');
     return;
   }
 
@@ -313,7 +313,7 @@ async function withBusy(button, action) {
 }
 
 /* =========================================================
-   Вкладка «Сотрудники»
+   Вкладка «Физлица»
    ========================================================= */
 function departmentOptions(current) {
   const names = allDepartments();
@@ -324,7 +324,7 @@ function departmentOptions(current) {
     .join('');
 }
 
-let editingEmployeeId = null; // id сотрудника, который сейчас редактируется прямо в списке
+let editingEmployeeId = null; // id физлица, которое сейчас редактируется прямо в списке
 
 function renderList(animate = false) {
   const body = $('#listBody');
@@ -336,7 +336,7 @@ function renderList(animate = false) {
   body.classList.toggle('anim', animate);
 
   if (rows.length === 0) {
-    const text = state.employees.length === 0 ? 'В базе пока нет сотрудников' : 'Ничего не найдено';
+    const text = state.employees.length === 0 ? 'В базе пока нет физлиц' : 'Ничего не найдено';
     body.innerHTML = `<div class="empty">${text}</div>`;
     return;
   }
@@ -347,11 +347,11 @@ function renderList(animate = false) {
     <div class="trow" style="animation-delay:${Math.min(i, 12) * 40}ms">
       <div class="person"><div class="av">${escapeHtml(initials(e.who))}</div><span class="n" title="${escapeHtml(e.who)}">${escapeHtml(e.who)}</span></div>
       <div class="role" title="${escapeHtml(e.info)}">${escapeHtml(e.info)}</div>
-      <div><select class="sel" data-id="${e.id}" aria-label="Отдел сотрудника">${departmentOptions(e.group)}</select></div>
+      <div><select class="sel" data-id="${e.id}" aria-label="Задание физлица">${departmentOptions(e.group)}</select></div>
       <div class="when">${escapeHtml(formatWhen(e.date, e.time))}</div>
       <div class="row-actions">
-        <button type="button" class="cdel" data-edit-id="${e.id}" aria-label="Изменить сотрудника" title="Изменить">${ICONS.edit}</button>
-        <button type="button" class="cdel" data-remove-id="${e.id}" aria-label="Отбить сотрудника" title="Отбить сотрудника">${ICONS.trash}</button>
+        <button type="button" class="cdel" data-edit-id="${e.id}" aria-label="Изменить физлицо" title="Изменить">${ICONS.edit}</button>
+        <button type="button" class="cdel" data-remove-id="${e.id}" aria-label="Отбить физлицо" title="Отбить физлицо">${ICONS.trash}</button>
       </div>
     </div>`).join('');
 }
@@ -361,10 +361,10 @@ function renderEditRow(e, i) {
     <div class="trow editing" style="animation-delay:${Math.min(i, 12) * 40}ms">
       <div class="person">
         <div class="av">${escapeHtml(initials(e.who))}</div>
-        <input class="inp sm edit-who" value="${escapeHtml(e.who)}" aria-label="ФИО сотрудника" placeholder="Фамилия Имя Отчество">
+        <input class="inp sm edit-who" value="${escapeHtml(e.who)}" aria-label="ФИО физлица" placeholder="Фамилия Имя Отчество">
       </div>
       <div><input class="inp sm edit-info" value="${escapeHtml(e.info)}" aria-label="Должность" placeholder="Должность"></div>
-      <div><select class="sel" data-id="${e.id}" aria-label="Отдел сотрудника">${departmentOptions(e.group)}</select></div>
+      <div><select class="sel" data-id="${e.id}" aria-label="Задание физлица">${departmentOptions(e.group)}</select></div>
       <div class="when">${escapeHtml(formatWhen(e.date, e.time))}</div>
       <div class="row-actions">
         <button type="button" class="cdel ok" data-save-id="${e.id}" aria-label="Сохранить изменения" title="Сохранить">${ICONS.check}</button>
@@ -389,7 +389,7 @@ function cancelEditEmployee() {
 async function saveEmployeeEdit(id, row) {
   const who = $('.edit-who', row).value.trim().replace(/\s+/g, ' ');
   const info = $('.edit-info', row).value.trim();
-  if (!who) { toast('Укажите ФИО сотрудника', 'error'); $('.edit-who', row).focus(); return; }
+  if (!who) { toast('Укажите ФИО физлица', 'error'); $('.edit-who', row).focus(); return; }
   if (!info) { toast('Укажите должность', 'error'); $('.edit-info', row).focus(); return; }
 
   const saveBtn = $('[data-save-id]', row);
@@ -408,7 +408,7 @@ async function saveEmployeeEdit(id, row) {
 }
 
 function deleteEmployeeFromList(id, fio) {
-  confirmDialog('Отбить сотрудника?', `«${fio}» получит в базе метку «отбился». Из списка он не удаляется.`, async () => {
+  confirmDialog('Отбить физлицо?', `«${fio}» получит в базе метку «отбился». Из списка он не удаляется.`, async () => {
     await api('remove_employee', id);
     renderAll();
     toast('Отбитие выполнено');
@@ -416,7 +416,7 @@ function deleteEmployeeFromList(id, fio) {
 }
 
 /* =========================================================
-   Назначение отдела
+   Назначение задания
    ========================================================= */
 async function assignDepartment(id, department, { viaDrop = false } = {}) {
   const employee = findEmployee(id);
@@ -425,7 +425,7 @@ async function assignDepartment(id, department, { viaDrop = false } = {}) {
   if (department) {
     const occupied = state.employees.filter((e) => e.group === department).length;
     if (occupied >= state.departmentCapacity) {
-      toast(`В отделе «${department}» уже максимум мест (${state.departmentCapacity})`, 'error');
+      toast(`В задании «${department}» уже максимум мест (${state.departmentCapacity})`, 'error');
       renderList();
       renderBoards();
       return;
@@ -450,13 +450,13 @@ async function assignDepartment(id, department, { viaDrop = false } = {}) {
 }
 
 /* =========================================================
-   Вкладка «Отделы»
+   Вкладка «Задания»
    ========================================================= */
 function cardMatches(employee, query) {
   return !!query && normalize(`${employee.who} ${employee.info}`).includes(query);
 }
 
-let editingDepartment = null; // название отдела, который сейчас переименовывается
+let editingDepartment = null; // название задания, которое сейчас переименовывается
 
 function renderBoards(animate = false) {
   const boards = $('#boards');
@@ -475,7 +475,7 @@ function renderBoards(animate = false) {
 
     const isEditing = dept && dept === editingDepartment;
     const headInner = isEditing ? `
-        <input class="inp sm dept-edit-name" value="${escapeHtml(dept)}" aria-label="Название отдела">
+        <input class="inp sm dept-edit-name" value="${escapeHtml(dept)}" aria-label="Название задания">
         <button type="button" class="cdel ok" data-save-dept="${escapeHtml(dept)}" aria-label="Сохранить название" title="Сохранить">${ICONS.check}</button>
         <button type="button" class="cdel" data-cancel-dept aria-label="Отменить" title="Отменить">${ICONS.close}</button>
       ` : `
@@ -483,19 +483,19 @@ function renderBoards(animate = false) {
         <span class="badge${isFull ? ' full' : ''}">${dept ? `${items.length}/${capacity}` : items.length}</span>
         ${dept ? `
           <span class="chead-actions">
-            <button type="button" class="cdel" data-edit-dept="${escapeHtml(dept)}" aria-label="Переименовать отдел" title="Переименовать">${ICONS.edit}</button>
-            <button type="button" class="cdel" data-delete="${escapeHtml(dept)}" aria-label="Удалить отдел" title="Удалить отдел">${ICONS.trash}</button>
+            <button type="button" class="cdel" data-edit-dept="${escapeHtml(dept)}" aria-label="Переименовать задание" title="Переименовать">${ICONS.edit}</button>
+            <button type="button" class="cdel" data-delete="${escapeHtml(dept)}" aria-label="Удалить задание" title="Удалить задание">${ICONS.trash}</button>
           </span>` : ''}
       `;
 
     return `
       <div class="col${isFull ? ' full' : ''}" data-dept="${escapeHtml(dept)}" style="animation-delay:${Math.min(i, 10) * 50}ms">
         <div class="chead${isEditing ? ' editing' : ''}">${headInner}</div>
-        <div class="stack">${cards || '<div class="drop">Перетащите сотрудника сюда</div>'}</div>
+        <div class="stack">${cards || '<div class="drop">Перетащите физлицо сюда</div>'}</div>
       </div>`;
   }).join('') + `
     <div class="col ghost" style="animation-delay:${Math.min(columns.length, 10) * 50}ms">
-      <button type="button" class="newdept" id="newDeptBtn"><span class="plus">${ICONS.plus}</span>Новый отдел</button>
+      <button type="button" class="newdept" id="newDeptBtn"><span class="plus">${ICONS.plus}</span>Новое задание</button>
     </div>`;
 
   applyBoardSearch({ scroll: false });
@@ -517,10 +517,10 @@ function cancelEditDepartment() {
 async function saveDepartmentRename(oldName, chead) {
   const input = $('.dept-edit-name', chead);
   const newName = input.value.trim().replace(/\s+/g, ' ');
-  if (!newName) { toast('Введите название отдела', 'error'); input.focus(); return; }
+  if (!newName) { toast('Введите название задания', 'error'); input.focus(); return; }
   if (newName === oldName) { editingDepartment = null; renderBoards(); return; }
   if (allDepartments().some((d) => normalize(d) === normalize(newName))) {
-    toast('Такой отдел уже есть', 'error');
+    toast('Такое задание уже есть', 'error');
     return;
   }
 
@@ -533,24 +533,24 @@ async function saveDepartmentRename(oldName, chead) {
     editingDepartment = null;
     renderBoards();
     renderList();
-    toast(`Отдел переименован в «${newName}»`);
+    toast(`Задание переименовано в «${newName}»`);
   } catch (error) {
     toast(error.message, 'error');
     saveBtn.disabled = false;
   }
 }
 
-/** Скрывает/показывает сотрудников во всех отделах. При активном поиске отделы раскрыты, чтобы были видны найденные. */
+/** Скрывает/показывает физлица во всех заданиях. При активном поиске задания раскрыты, чтобы были видны найденные. */
 function updateBoardsCollapse() {
   const searching = !!normalize($('#boardSearch').value);
   const collapsed = state.boardsCollapsed && !searching;
   $('#boards').classList.toggle('collapsed', collapsed);
   const button = $('#toggleBoardsBtn');
-  button.textContent = state.boardsCollapsed ? 'Раскрыть все отделы' : 'Скрыть все отделы';
+  button.textContent = state.boardsCollapsed ? 'Раскрыть все задания' : 'Скрыть все задания';
   button.setAttribute('aria-expanded', String(!state.boardsCollapsed));
 }
 
-/** Подсветка найденных сотрудников и их отделов без перерисовки досок. */
+/** Подсветка найденных физлиц и их заданий без перерисовки досок. */
 function applyBoardSearch({ scroll = true } = {}) {
   const query = normalize($('#boardSearch').value);
   updateBoardsCollapse();
@@ -601,7 +601,7 @@ function flashCard(id, className) {
 function showNewDepartmentForm(ghost) {
   ghost.innerHTML = `
     <form class="deptform" novalidate>
-      <input class="inp" name="name" placeholder="Название отдела" autocomplete="off" maxlength="80">
+      <input class="inp" name="name" placeholder="Название задания" autocomplete="off" maxlength="80">
       <div class="row">
         <button type="button" class="btn ghost small" data-cancel>Отмена</button>
         <button type="submit" class="btn small">Создать</button>
@@ -616,7 +616,7 @@ function showNewDepartmentForm(ghost) {
     const name = input.value.trim().replace(/\s+/g, ' ');
     if (!name) { input.focus(); return; }
     if ([NO_DEPT_TITLE, ...allDepartments()].some((d) => normalize(d) === normalize(name))) {
-      toast('Такой отдел уже есть', 'error');
+      toast('Такое задание уже есть', 'error');
       return;
     }
     try {
@@ -624,7 +624,7 @@ function showNewDepartmentForm(ghost) {
       state.customDepartments.push(name);
       renderBoards();
       renderList();
-      toast(`Отдел «${name}» создан`);
+      toast(`Задание «${name}» создано`);
     } catch (error) {
       toast(error.message, 'error');
     }
@@ -634,15 +634,15 @@ function showNewDepartmentForm(ghost) {
 function deleteDepartment(name) {
   const count = state.employees.filter((e) => e.group === name).length;
   const text = count
-    ? `Сотрудники отдела (${count}) будут перемещены в «${NO_DEPT_TITLE}».`
-    : 'В отделе нет сотрудников.';
-  confirmDialog(`Удалить отдел «${name}»?`, text, async () => {
+    ? `Физлица задания (${count}) будут перемещены в «${NO_DEPT_TITLE}».`
+    : 'В задании нет физлиц.';
+  confirmDialog(`Удалить задание «${name}»?`, text, async () => {
     await api('delete_department', name);
     state.customDepartments = state.customDepartments.filter((d) => d !== name);
     state.employees.forEach((e) => { if (e.group === name) e.group = NO_DEPT; });
     renderBoards();
     renderList();
-    toast(`Отдел «${name}» удалён`);
+    toast(`Задание «${name}» удалено`);
   });
 }
 
@@ -810,7 +810,7 @@ async function loadHistory({ animate = false } = {}) {
 }
 
 function deleteHistoryEvent(id, fio) {
-  confirmDialog('Удалить запись из истории?', `Запись о сотруднике «${fio}» будет удалена безвозвратно.`, async () => {
+  confirmDialog('Удалить запись из истории?', `Запись о физлице «${fio}» будет удалена безвозвратно.`, async () => {
     await api('delete_history_event', id);
     await loadHistory();
     toast('Запись удалена из истории');
@@ -818,7 +818,7 @@ function deleteHistoryEvent(id, fio) {
 }
 
 /* =========================================================
-   Импорт сотрудников из файла
+   Импорт физлиц из файла
    ========================================================= */
 let importParsedRows = []; // полный список строк, распарсенных из последнего выбранного файла
 
@@ -856,7 +856,7 @@ function renderImportPreview(rows, skipped) {
     return;
   }
 
-  let summary = `Найдено сотрудников: ${rows.length}`;
+  let summary = `Найдено физлиц: ${rows.length}`;
   if (skipped) summary += ` · пропущено строк (нет ФИО или должности): ${skipped}`;
   $('#importSummary').textContent = summary;
 
@@ -897,7 +897,7 @@ async function confirmImport() {
     const department = $('#importDept').value;
     const { added } = await api('import_employees', importParsedRows, department);
     closeModal($('#importModal'));
-    toast(`Импортировано сотрудников: ${added}`);
+    toast(`Импортировано физлиц: ${added}`);
     await loadEmployees({ animate: true });
   } catch (error) {
     setImportStatus(error.message);
@@ -1008,7 +1008,7 @@ function bindEvents() {
   });
   $('#employeeForm').addEventListener('submit', submitForm);
 
-  // Сотрудники
+  // Физлица
   $('#listSearch').addEventListener('input', () => renderList());
   $('#listBody').addEventListener('change', (e) => {
     const select = e.target.closest('.sel');
@@ -1025,7 +1025,7 @@ function bindEvents() {
 
     const removeBtn = e.target.closest('[data-remove-id]');
     if (removeBtn) {
-      const fio = $('.n', removeBtn.closest('.trow'))?.textContent || 'сотрудник';
+      const fio = $('.n', removeBtn.closest('.trow'))?.textContent || 'физлицо';
       deleteEmployeeFromList(Number(removeBtn.dataset.removeId), fio);
     }
   });
@@ -1036,7 +1036,7 @@ function bindEvents() {
     else if (e.key === 'Escape') { e.preventDefault(); cancelEditEmployee(); }
   });
 
-  // Отделы
+  // Задания
   const scrollToHit = debounce(() => applyBoardSearch({ scroll: true }), 300);
   $('#boardSearch').addEventListener('input', () => {
     applyBoardSearch({ scroll: false });
@@ -1088,7 +1088,7 @@ function bindEvents() {
   $('#historyBody').addEventListener('click', (e) => {
     const btn = e.target.closest('.cdel');
     if (!btn) return;
-    const fio = $('.n', btn.closest('.trow'))?.textContent || 'сотрудник';
+    const fio = $('.n', btn.closest('.trow'))?.textContent || 'физлицо';
     deleteHistoryEvent(Number(btn.dataset.id), fio);
   });
 

@@ -3,7 +3,7 @@ from django.db.models.functions import Lower
 
 
 class Department(models.Model):
-    """Отдел. Название уникально без учёта регистра."""
+    """Задание. Название уникально без учёта регистра."""
 
     name = models.TextField()
 
@@ -16,7 +16,7 @@ class Department(models.Model):
 
 
 class Employee(models.Model):
-    """Сотрудник. «Отбитый» не удаляется, а получает статус approved."""
+    """Физлицо. «Отбитое» не удаляется, а получает статус approved."""
 
     ADDED = "add"
     APPROVED = "approved"
@@ -37,7 +37,7 @@ class Employee(models.Model):
 
 
 class HistoryEvent(models.Model):
-    """Журнал добавлений и отбитий: снимок данных без связей, записи не зависят от сотрудника."""
+    """Журнал добавлений и отбитий: снимок данных без связей, записи не зависят от физлица."""
 
     ADD = "add"
     REMOVE = "remove"

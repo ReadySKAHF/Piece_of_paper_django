@@ -13,7 +13,7 @@ from staff.models import Department, Employee, HistoryEvent
 
 
 class Command(BaseCommand):
-    help = "Переносит сотрудников, отделы и историю из старых таблиц (employees, employees_history, employees_departments)."
+    help = "Переносит физлиц, задания и историю из старых таблиц (employees, employees_history, employees_departments)."
 
     def add_arguments(self, parser):
         parser.add_argument("--table", default="employees", help="Имя основной таблицы старого приложения")
@@ -66,7 +66,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Перенесено: сотрудников — {len(employees)}, отделов — {len(departments)}, событий — {len(events)}"
+                f"Перенесено: физлиц — {len(employees)}, заданий — {len(departments)}, событий — {len(events)}"
             )
         )
 

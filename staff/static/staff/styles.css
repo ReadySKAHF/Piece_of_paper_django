@@ -349,7 +349,7 @@ textarea.inp { resize: none; min-height: 92px; line-height: 1.45; }
 .status.ok { color: var(--success); background: var(--success-soft); }
 .status.bad { color: var(--danger); background: var(--danger-soft); }
 
-/* ---------- Импорт сотрудников ---------- */
+/* ---------- Импорт физлиц ---------- */
 .import-dialog { width: min(640px, 100%); }
 .dropzone {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;

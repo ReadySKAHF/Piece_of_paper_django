@@ -20,13 +20,13 @@
     <nav class="tabs" aria-label="Разделы">
       <div class="ind" id="tabIndicator"></div>
       <button type="button" class="tab on" data-tab="add">Учёт</button>
-      <button type="button" class="tab" data-tab="list">Сотрудники</button>
-      <button type="button" class="tab" data-tab="boards">Отделы</button>
+      <button type="button" class="tab" data-tab="list">Физлица</button>
+      <button type="button" class="tab" data-tab="boards">Задания</button>
       <button type="button" class="tab" data-tab="history">История</button>
     </nav>
 
     <div class="actions">
-      <button type="button" class="iconbtn" id="importBtn" aria-label="Импорт сотрудников из файла" title="Импорт сотрудников из файла">
+      <button type="button" class="iconbtn" id="importBtn" aria-label="Импорт физлиц из файла" title="Импорт физлиц из файла">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
       </button>
       <button type="button" class="iconbtn" id="themeBtn" aria-label="Переключить тему" title="Переключить тему"></button>
@@ -38,8 +38,8 @@
     <!-- Учёт: добавление и отбитие -->
     <section class="view split" id="view-add">
       <div class="intro">
-        <h1 class="h1" id="formTitle">Добавление сотрудника</h1>
-        <p class="muted">Выберите действие, укажите ФИО сотрудника и подтвердите.</p>
+        <h1 class="h1" id="formTitle">Добавление физлица</h1>
+        <p class="muted">Выберите действие, укажите ФИО физлица и подтвердите.</p>
       </div>
 
       <form class="card form" id="employeeForm" novalidate>
@@ -74,8 +74,8 @@
         <div class="collapse open" id="deptBlock">
           <div>
             <div class="field">
-              <label class="lbl" for="addDept">Отдел</label>
-              <select class="sel" id="addDept" aria-label="Отдел сотрудника"></select>
+              <label class="lbl" for="addDept">Задание</label>
+              <select class="sel" id="addDept" aria-label="Задание физлица"></select>
             </div>
           </div>
         </div>
@@ -86,36 +86,36 @@
       </form>
     </section>
 
-    <!-- Список сотрудников -->
+    <!-- Список физлиц -->
     <section class="view" id="view-list" hidden>
       <div class="bar sticky">
         <div>
-          <h2 class="h2">Сотрудники</h2>
+          <h2 class="h2">Физлица</h2>
           <p class="sub">Всего в базе: <span id="totalCount">0</span></p>
         </div>
         <div class="search">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <input class="inp" id="listSearch" type="search" aria-label="Поиск сотрудников" placeholder="Поиск по ФИО, должности или отделу">
+          <input class="inp" id="listSearch" type="search" aria-label="Поиск физлиц" placeholder="Поиск по ФИО, должности или заданию">
         </div>
       </div>
 
       <div class="card tbl list">
-        <div class="trow thead"><span>ФИО</span><span>Должность</span><span>Отдел</span><span>Добавлен</span><span></span></div>
+        <div class="trow thead"><span>ФИО</span><span>Должность</span><span>Задание</span><span>Добавлен</span><span></span></div>
         <div class="body" id="listBody"></div>
       </div>
     </section>
 
-    <!-- Доски отделов -->
+    <!-- Доски заданий -->
     <section class="view" id="view-boards" hidden>
       <div class="bar sticky">
         <div>
-          <h2 class="h2">Отделы</h2>
-          <p class="sub">Перетаскивайте сотрудников между отделами или нажмите на сотрудника дважды</p>
+          <h2 class="h2">Задания</h2>
+          <p class="sub">Перетаскивайте физлица между заданиями или нажмите на физлицо дважды</p>
         </div>
-        <button type="button" class="btn ghost small" id="toggleBoardsBtn" aria-expanded="false">Раскрыть все отделы</button>
+        <button type="button" class="btn ghost small" id="toggleBoardsBtn" aria-expanded="false">Раскрыть все задания</button>
         <div class="search">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <input class="inp" id="boardSearch" type="search" aria-label="Найти сотрудника" placeholder="Найти сотрудника">
+          <input class="inp" id="boardSearch" type="search" aria-label="Найти физлицо" placeholder="Найти физлицо">
         </div>
         <div class="found" id="found" aria-live="polite" hidden></div>
       </div>
@@ -152,7 +152,7 @@
       </div>
 
       <div class="card tbl hist">
-        <div class="trow thead"><span>ФИО</span><span>Должность</span><span>Отдел</span><span>Дата и время</span><span></span></div>
+        <div class="trow thead"><span>ФИО</span><span>Должность</span><span>Задание</span><span>Дата и время</span><span></span></div>
         <div class="body" id="historyBody"></div>
       </div>
     </section>
@@ -161,11 +161,11 @@
 
   <div class="toast-host" id="toastHost"></div>
 
-  <!-- Импорт сотрудников -->
+  <!-- Импорт физлиц -->
   <div class="overlay" id="importModal" hidden>
     <div class="card dialog import-dialog" role="dialog" aria-labelledby="importTitle">
       <div class="dialog-head">
-        <h2 class="h3" id="importTitle">Импорт сотрудников</h2>
+        <h2 class="h3" id="importTitle">Импорт физлиц</h2>
         <p class="sub">Файл с двумя столбцами: ФИО и должность. Форматы — .xlsx, .csv</p>
       </div>
 
@@ -180,7 +180,7 @@
 
       <div class="import-result" id="importResult" hidden>
         <div class="field">
-          <label class="lbl" for="importDept">Отдел для импортируемых сотрудников</label>
+          <label class="lbl" for="importDept">Задание для импортируемых физлиц</label>
           <select class="sel" id="importDept"></select>
         </div>
         <p class="sub" id="importSummary"></p>
@@ -194,11 +194,11 @@
     </div>
   </div>
 
-  <!-- Перемещение сотрудника в отдел -->
+  <!-- Перемещение физлица в задание -->
   <div class="overlay" id="moveModal" hidden>
     <form class="card dialog narrow" id="moveForm" novalidate>
       <div class="dialog-head">
-        <h2 class="h3">Переместить сотрудника</h2>
+        <h2 class="h3">Переместить физлицо</h2>
         <p class="sub" id="moveText"></p>
       </div>
       <div class="field">

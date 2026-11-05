@@ -21,7 +21,7 @@ def _collapse(value) -> str:
 
 
 def _get_department(name: str) -> Department | None:
-    """Отдел по названию (без учёта регистра); пустое название — «без отдела»."""
+    """Задание по названию (без учёта регистра); пустое название — «без задания»."""
     name = _collapse(name)
     if not name:
         return None
@@ -36,11 +36,11 @@ def _free_places(department: Department, exclude_id: int | None = None) -> int:
 
 def _check_capacity(department: Department, exclude_id: int | None = None) -> None:
     if _free_places(department, exclude_id) <= 0:
-        raise ValueError(f"В отделе «{department.name}» уже максимум мест ({DEPARTMENT_CAPACITY})")
+        raise ValueError(f"В задании «{department.name}» уже максимум мест ({DEPARTMENT_CAPACITY})")
 
 
 def _serialize(item) -> dict:
-    """Сотрудник или событие журнала в формате, который ждёт фронтенд."""
+    """Физлицо или событие журнала в формате, который ждёт фронтенд."""
     department = item.department.name if isinstance(item, Employee) and item.department else ""
     if isinstance(item, HistoryEvent):
         department = item.department_name
@@ -73,7 +73,7 @@ def get_settings() -> dict:
     }
 
 
-# --- Сотрудники ---
+# --- Физлица ---
 
 def get_employees() -> list[dict]:
     return [_serialize(e) for e in Employee.objects.select_related("department")]
@@ -84,9 +84,9 @@ def add_employee(who, info, department="") -> dict:
     who = _collapse(who)
     info = str(info or "").strip()
     if not who:
-        raise ValueError("Укажите ФИО сотрудника")
+        raise ValueError("Укажите ФИО физлица")
     if not info:
-        raise ValueError("Опишите должность сотрудника")
+        raise ValueError("Опишите должность физлица")
 
     dept = _get_department(department)
     if dept:
@@ -103,10 +103,10 @@ def add_employee(who, info, department="") -> dict:
 
 @transaction.atomic
 def remove_employee(employee_id) -> bool:
-    """«Отбитие»: сотрудник остаётся в базе, в журнал пишется событие."""
+    """«Отбитие»: физлицо остаётся в базе, в журнал пишется событие."""
     employee = Employee.objects.select_related("department").filter(pk=int(employee_id)).first()
     if employee is None:
-        raise ValueError("Сотрудник не найден")
+        raise ValueError("Физлицо не найдено")
     employee.status = Employee.APPROVED
     employee.save(update_fields=["status"])
     _add_history(
@@ -126,11 +126,11 @@ def update_employee(employee_id, who, info) -> bool:
     who = _collapse(who)
     info = str(info or "").strip()
     if not who:
-        raise ValueError("Укажите ФИО сотрудника")
+        raise ValueError("Укажите ФИО физлица")
     if not info:
         raise ValueError("Укажите должность")
     if not Employee.objects.filter(pk=int(employee_id)).update(who=who, info=info):
-        raise ValueError("Сотрудник не найден")
+        raise ValueError("Физлицо не найдено")
     return True
 
 
@@ -138,7 +138,7 @@ def update_employee(employee_id, who, info) -> bool:
 def set_department(employee_id, department) -> str:
     employee = Employee.objects.filter(pk=int(employee_id)).first()
     if employee is None:
-        raise ValueError("Сотрудник не найден")
+        raise ValueError("Физлицо не найдено")
     dept = _get_department(department)
     if dept:
         _check_capacity(dept, exclude_id=employee.pk)
@@ -147,22 +147,22 @@ def set_department(employee_id, department) -> str:
     return dept.name if dept else ""
 
 
-# --- Отделы ---
+# --- Задания ---
 
 def add_department(name) -> str:
     name = _collapse(name)
     if not name:
-        raise ValueError("Введите название отдела")
+        raise ValueError("Введите название задания")
     try:
         with transaction.atomic():
             Department.objects.create(name=name)
     except IntegrityError:
-        raise ValueError("Такой отдел уже есть")
+        raise ValueError("Такое задание уже есть")
     return name
 
 
 def delete_department(name) -> bool:
-    """Удаляет отдел; его сотрудники остаются, но без отдела (on_delete=SET_NULL)."""
+    """Удаляет задание; его физлица остаются, но без задания (on_delete=SET_NULL)."""
     Department.objects.filter(name=_collapse(name)).delete()
     return True
 
@@ -170,18 +170,18 @@ def delete_department(name) -> bool:
 def rename_department(old_name, new_name) -> str:
     old_name, new_name = _collapse(old_name), _collapse(new_name)
     if not old_name:
-        raise ValueError("Отдел не указан")
+        raise ValueError("Задание не указано")
     if not new_name:
-        raise ValueError("Введите название отдела")
+        raise ValueError("Введите название задания")
     if new_name == old_name:
         return new_name
     try:
         with transaction.atomic():
             updated = Department.objects.filter(name=old_name).update(name=new_name)
     except IntegrityError:
-        raise ValueError("Такой отдел уже есть")
+        raise ValueError("Такое задание уже есть")
     if not updated:
-        raise ValueError("Отдел не найден")
+        raise ValueError("Задание не найдено")
     return new_name
 
 
@@ -234,8 +234,8 @@ def import_employees(rows, department="") -> dict:
         free = _free_places(dept)
         if len(clean_rows) > free:
             raise ValueError(
-                f"В отделе «{dept.name}» свободно мест: {max(free, 0)} из {DEPARTMENT_CAPACITY}, "
-                f"а импортируется {len(clean_rows)}. Уменьшите список или выберите другой отдел."
+                f"В задании «{dept.name}» свободно мест: {max(free, 0)} из {DEPARTMENT_CAPACITY}, "
+                f"а импортируется {len(clean_rows)}. Уменьшите список или выберите другое задание."
             )
 
     now = _now()

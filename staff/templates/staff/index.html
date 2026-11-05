@@ -1,0 +1,232 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Персонал</title>
+  <link rel="stylesheet" href="{% static 'staff/styles.css' %}">
+</head>
+<body>
+<div class="app" id="app" data-theme="light">
+
+  <header class="head">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>
+      </div>
+      <span>Персонал</span>
+    </div>
+
+    <nav class="tabs" aria-label="Разделы">
+      <div class="ind" id="tabIndicator"></div>
+      <button type="button" class="tab on" data-tab="add">Учёт</button>
+      <button type="button" class="tab" data-tab="list">Сотрудники</button>
+      <button type="button" class="tab" data-tab="boards">Отделы</button>
+      <button type="button" class="tab" data-tab="history">История</button>
+    </nav>
+
+    <div class="actions">
+      <button type="button" class="iconbtn" id="importBtn" aria-label="Импорт сотрудников из файла" title="Импорт сотрудников из файла">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      </button>
+      <button type="button" class="iconbtn" id="themeBtn" aria-label="Переключить тему" title="Переключить тему"></button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Учёт: добавление и отбитие -->
+    <section class="view split" id="view-add">
+      <div class="intro">
+        <h1 class="h1" id="formTitle">Добавление сотрудника</h1>
+        <p class="muted">Выберите действие, укажите ФИО сотрудника и подтвердите.</p>
+      </div>
+
+      <form class="card form" id="employeeForm" novalidate>
+        <div class="seg">
+          <label class="opt">
+            <input type="checkbox" name="mode" value="add" checked>
+            <span class="chk" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+            <span>Добавление</span>
+          </label>
+          <label class="opt">
+            <input type="checkbox" name="mode" value="remove">
+            <span class="chk" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+            <span>Отбитие</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="fio">ФИО</label>
+          <input class="inp" id="fio" type="text" autocomplete="off" placeholder="Фамилия Имя Отчество">
+          <div class="sugg" id="suggestions"></div>
+        </div>
+
+        <div class="collapse open" id="roleBlock">
+          <div>
+            <div class="field">
+              <label class="lbl" for="role">Должность</label>
+              <textarea class="inp" id="role" placeholder="Кратко опишите должность и обязанности"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="collapse open" id="deptBlock">
+          <div>
+            <div class="field">
+              <label class="lbl" for="addDept">Отдел</label>
+              <select class="sel" id="addDept" aria-label="Отдел сотрудника"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="err" id="formError" role="alert" hidden></div>
+
+        <button type="submit" class="btn" id="submitBtn">Подтвердить</button>
+      </form>
+    </section>
+
+    <!-- Список сотрудников -->
+    <section class="view" id="view-list" hidden>
+      <div class="bar sticky">
+        <div>
+          <h2 class="h2">Сотрудники</h2>
+          <p class="sub">Всего в базе: <span id="totalCount">0</span></p>
+        </div>
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input class="inp" id="listSearch" type="search" aria-label="Поиск сотрудников" placeholder="Поиск по ФИО, должности или отделу">
+        </div>
+      </div>
+
+      <div class="card tbl list">
+        <div class="trow thead"><span>ФИО</span><span>Должность</span><span>Отдел</span><span>Добавлен</span><span></span></div>
+        <div class="body" id="listBody"></div>
+      </div>
+    </section>
+
+    <!-- Доски отделов -->
+    <section class="view" id="view-boards" hidden>
+      <div class="bar sticky">
+        <div>
+          <h2 class="h2">Отделы</h2>
+          <p class="sub">Перетаскивайте сотрудников между отделами или нажмите на сотрудника дважды</p>
+        </div>
+        <button type="button" class="btn ghost small" id="toggleBoardsBtn" aria-expanded="false">Раскрыть все отделы</button>
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input class="inp" id="boardSearch" type="search" aria-label="Найти сотрудника" placeholder="Найти сотрудника">
+        </div>
+        <div class="found" id="found" aria-live="polite" hidden></div>
+      </div>
+
+      <div class="boards" id="boards"></div>
+    </section>
+
+    <!-- История -->
+    <section class="view" id="view-history" hidden>
+      <div class="bar">
+        <div>
+          <h2 class="h2">История</h2>
+          <p class="sub" id="historySummary">За период: 0</p>
+        </div>
+      </div>
+
+      <div class="card filters">
+        <div class="field">
+          <label class="lbl" for="histFrom">Начальная дата</label>
+          <input class="inp" id="histFrom" type="date">
+        </div>
+        <div class="field">
+          <label class="lbl" for="histTo">Конечная дата</label>
+          <input class="inp" id="histTo" type="date">
+        </div>
+        <div class="field grow">
+          <span class="lbl">Действие</span>
+          <div class="toggle" id="histToggle">
+            <div class="tind" id="histInd"></div>
+            <button type="button" class="tog on" data-action="add">Добавление</button>
+            <button type="button" class="tog" data-action="remove">Отбитие</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card tbl hist">
+        <div class="trow thead"><span>ФИО</span><span>Должность</span><span>Отдел</span><span>Дата и время</span><span></span></div>
+        <div class="body" id="historyBody"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="toast-host" id="toastHost"></div>
+
+  <!-- Импорт сотрудников -->
+  <div class="overlay" id="importModal" hidden>
+    <div class="card dialog import-dialog" role="dialog" aria-labelledby="importTitle">
+      <div class="dialog-head">
+        <h2 class="h3" id="importTitle">Импорт сотрудников</h2>
+        <p class="sub">Файл с двумя столбцами: ФИО и должность. Форматы — .xlsx, .csv</p>
+      </div>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Выбрать файл для импорта">
+        <input type="file" id="importFile" accept=".csv,.xlsx" hidden>
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <p><b id="dzText">Перетащите файл сюда</b></p>
+        <p class="sub">или нажмите, чтобы выбрать</p>
+      </div>
+
+      <div class="status" id="importStatus" hidden></div>
+
+      <div class="import-result" id="importResult" hidden>
+        <div class="field">
+          <label class="lbl" for="importDept">Отдел для импортируемых сотрудников</label>
+          <select class="sel" id="importDept"></select>
+        </div>
+        <p class="sub" id="importSummary"></p>
+        <div class="import-preview card" id="importPreview"></div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" data-close>Отмена</button>
+        <button type="button" class="btn" id="importConfirmBtn" disabled>Импортировать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Перемещение сотрудника в отдел -->
+  <div class="overlay" id="moveModal" hidden>
+    <form class="card dialog narrow" id="moveForm" novalidate>
+      <div class="dialog-head">
+        <h2 class="h3">Переместить сотрудника</h2>
+        <p class="sub" id="moveText"></p>
+      </div>
+      <div class="field">
+        <label class="lbl" for="moveDept">Группа</label>
+        <select class="sel" id="moveDept"></select>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" data-close>Отмена</button>
+        <button type="submit" class="btn">Переместить</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Подтверждение -->
+  <div class="overlay" id="confirmModal" hidden>
+    <div class="card dialog narrow" role="alertdialog" aria-labelledby="confirmTitle">
+      <div class="dialog-head">
+        <h2 class="h3" id="confirmTitle"></h2>
+        <p class="sub" id="confirmText"></p>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" data-close>Отмена</button>
+        <button type="button" class="btn danger" id="confirmOk">Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'staff/app.js' %}"></script>
+</body>
+</html>
